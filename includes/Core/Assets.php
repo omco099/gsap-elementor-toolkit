@@ -43,6 +43,10 @@ class Assets {
 		$this->add( new Asset( 'gsap-elementor-toolkit-admin', 'assets/css/admin.css', Asset::TYPE_STYLE, Asset::AREA_ADMIN, array(), $this->version ) );
 		$this->add( new Asset( 'gsap-elementor-toolkit-admin', 'assets/js/admin.js', Asset::TYPE_SCRIPT, Asset::AREA_ADMIN, array(), $this->version ) );
 		$this->add( new Asset( 'gsap-elementor-toolkit-runtime', 'assets/js/runtime.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap', 'scroll-trigger' ), $this->version, false ) );
+		$this->add( new Asset( 'gsap-elementor-toolkit-registry', 'assets/js/registry.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap-elementor-toolkit-runtime' ), $this->version, false ) );
+		$this->add( new Asset( 'gsap-elementor-toolkit-engine', 'assets/js/engine.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap-elementor-toolkit-registry' ), $this->version, false ) );
+		$this->add( new Asset( 'gsap-elementor-toolkit-fade-up', 'assets/js/animations/fade-up.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap-elementor-toolkit-engine' ), $this->version, false ) );
+		$this->add( new Asset( 'gsap-elementor-toolkit-scanner', 'assets/js/scanner.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap-elementor-toolkit-engine', 'gsap-elementor-toolkit-fade-up' ), $this->version, false ) );
 	}
 
 	/**
