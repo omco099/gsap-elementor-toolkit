@@ -14,11 +14,20 @@
 				return;
 			}
 
+			var config = globalScope.GSAPToolkit && globalScope.GSAPToolkit.Config && typeof globalScope.GSAPToolkit.Config.read === 'function'
+				? globalScope.GSAPToolkit.Config.read(element)
+				: {
+					duration: 0.8,
+					delay: 0,
+					ease: 'power2.out'
+				};
+
 			globalScope.gsap.from(element, {
 				y: 60,
 				opacity: 0,
-				duration: 0.8,
-				ease: 'power2.out'
+				duration: config.duration,
+				delay: config.delay,
+				ease: config.ease
 			});
 		}
 	};
