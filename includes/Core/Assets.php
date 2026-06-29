@@ -1,0 +1,82 @@
+<?php
+/**
+ * Asset registry for the plugin.
+ *
+ * @package GSAP_Elementor_Toolkit\Core
+ */
+
+namespace GSAP_Elementor_Toolkit\Core;
+
+/**
+ * Stores asset definitions for later loading by a dedicated WordPress asset loader.
+ */
+class Assets {
+	/**
+	 * Plugin version string.
+	 *
+	 * @var string
+	 */
+	private string $version;
+
+	/**
+	 * Registered assets.
+	 *
+	 * @var array<int, Asset>
+	 */
+	private array $assets = array();
+
+	/**
+	 * Create a new asset registry instance.
+	 *
+	 * @param string $version Plugin version.
+	 */
+	public function __construct( string $version = GSAP_ELEMENTOR_TOOLKIT_VERSION ) {
+		$this->version = $version;
+	}
+
+	/**
+	 * Register default frontend and admin assets.
+	 */
+	public function registerDefaultAssets(): void {
+		$this->add( new Asset( 'gsap-elementor-toolkit-frontend', 'assets/css/frontend.css', Asset::TYPE_STYLE, Asset::AREA_FRONTEND, array(), $this->version ) );
+		$this->add( new Asset( 'gsap-elementor-toolkit-frontend', 'assets/js/frontend.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array(), $this->version ) );
+		$this->add( new Asset( 'gsap-elementor-toolkit-admin', 'assets/css/admin.css', Asset::TYPE_STYLE, Asset::AREA_ADMIN, array(), $this->version ) );
+		$this->add( new Asset( 'gsap-elementor-toolkit-admin', 'assets/js/admin.js', Asset::TYPE_SCRIPT, Asset::AREA_ADMIN, array(), $this->version ) );
+	}
+
+	/**
+	 * Add an asset definition to the registry.
+	 *
+	 * @param Asset $asset Asset definition.
+	 */
+	public function add( Asset $asset ): void {
+		$this->assets[] = $asset;
+	}
+
+	/**
+	 * Return all registered assets.
+	 *
+	 * @return array<int, Asset>
+	 */
+	public function all(): array {
+		return $this->assets;
+	}
+
+	/**
+	 * Return assets for the requested area.
+	 *
+	 * @param string $area Asset area.
+	 * @return array<int, Asset>
+	 */
+	public function forArea( string $area ): array {
+		$assets = array();
+
+		foreach ( $this->assets as $asset ) {
+			if ( $asset->getArea() === $area ) {
+				$assets[] = $asset;
+			}
+		}
+
+		return $assets;
+	}
+}

@@ -1,0 +1,17 @@
+{
+  "name": "omar/gsap-elementor-toolkit",
+  "description": "Professional GSAP animation toolkit for WordPress and Elementor.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "require": {
+    "php": "^8.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "GSAP_Elementor_Toolkit\\": "includes/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit"
+  }
+}
