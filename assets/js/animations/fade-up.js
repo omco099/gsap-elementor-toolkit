@@ -19,16 +19,31 @@
 				: {
 					duration: 0.8,
 					delay: 0,
-					ease: 'power2.out'
+					ease: 'power2.out',
+					scroll: false,
+					start: 'top bottom',
+					end: 'bottom top',
+					scrub: false
 				};
 
-			globalScope.gsap.from(element, {
+			var options = {
 				y: 60,
 				opacity: 0,
 				duration: config.duration,
 				delay: config.delay,
 				ease: config.ease
-			});
+			};
+
+			if (config.scroll) {
+				options.scrollTrigger = {
+					trigger: element,
+					start: config.start,
+					end: config.end,
+					scrub: config.scrub
+				};
+			}
+
+			globalScope.gsap.from(element, options);
 		}
 	};
 
