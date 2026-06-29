@@ -42,6 +42,7 @@ class Assets {
 		$this->add( new Asset( 'gsap-elementor-toolkit-frontend', 'assets/js/frontend.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array(), $this->version ) );
 		$this->add( new Asset( 'gsap-elementor-toolkit-admin', 'assets/css/admin.css', Asset::TYPE_STYLE, Asset::AREA_ADMIN, array(), $this->version ) );
 		$this->add( new Asset( 'gsap-elementor-toolkit-admin', 'assets/js/admin.js', Asset::TYPE_SCRIPT, Asset::AREA_ADMIN, array(), $this->version ) );
+		$this->add( new Asset( 'gsap-elementor-toolkit-runtime', 'assets/js/runtime.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap', 'scroll-trigger' ), $this->version, false ) );
 	}
 
 	/**
