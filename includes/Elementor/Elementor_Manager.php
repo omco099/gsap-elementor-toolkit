@@ -16,7 +16,6 @@ class Elementor_Manager {
 	}
 
 	public function register(): void {
-
 		if ( ! did_action( 'elementor/loaded' ) ) {
 			return;
 		}
