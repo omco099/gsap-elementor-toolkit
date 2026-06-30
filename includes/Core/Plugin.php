@@ -184,7 +184,7 @@ class Plugin {
 	 * Load the plugin text domain.
 	 */
 	private function load_textdomain(): void {
-		load_plugin_textdomain(
+		\load_plugin_textdomain(
 			GSAP_ELEMENTOR_TOOLKIT_TEXT_DOMAIN,
 			false,
 			dirname( GSAP_ELEMENTOR_TOOLKIT_BASENAME ) . '/languages/'

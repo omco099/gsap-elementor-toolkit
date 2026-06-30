@@ -1,45 +1,73 @@
 <?php
 /**
- * Elementor controls.
+ * Elementor integration manager.
  *
  * @package GSAP_Elementor_Toolkit\Elementor
  */
 
 namespace GSAP_Elementor_Toolkit\Elementor;
 
-use Elementor\Controls_Manager;
-use Elementor\Element_Base;
+use Elementor\Widget_Base;
 
 /**
- * Registers GSAP controls.
+ * Boots the Elementor integration layer.
  */
-class Animation_Controls {
+class Elementor_Manager {
 
 	/**
-	 * Register controls.
+	 * Controls registrar.
 	 *
-	 * @param Element_Base $element Elementor widget.
+	 * @var Animation_Controls
 	 */
-	public function register_controls( Element_Base $element ): void {
+	private Animation_Controls $controls;
 
-		$element->start_controls_section(
-			'gsap_animation',
-			array(
-				'label' => esc_html__( 'GSAP Animation', 'gsap-elementor-toolkit' ),
-				'tab'   => Controls_Manager::TAB_ADVANCED,
-			)
+	/**
+	 * Constructor.
+	 *
+	 * @param Animation_Controls|null $controls Controls registrar.
+	 */
+	public function __construct( ?Animation_Controls $controls = null ) {
+		$this->controls = $controls ?? new Animation_Controls();
+	}
+
+	/**
+	 * Register Elementor integration.
+	 */
+	public function register(): void {
+
+		if ( ! did_action( 'elementor/loaded' ) ) {
+			return;
+		}
+
+		add_action(
+			'elementor/element/after_section_end',
+			array( $this, 'register_widget_controls' ),
+			10,
+			3
 		);
+	}
 
-		$element->add_control(
-			'gsap_enable',
-			array(
-				'label'        => esc_html__( 'Enable Animation', 'gsap-elementor-toolkit' ),
-				'type'         => Controls_Manager::SWITCHER,
-				'return_value' => 'yes',
-				'default'      => '',
-			)
+	/**
+	 * Register controls on supported widgets.
+	 *
+	 * @param mixed  $element Elementor element.
+	 * @param string $section_id Section identifier.
+	 * @param array  $args Section arguments.
+	 */
+	public function register_widget_controls(
+		$element,
+		string $section_id,
+		array $args
+	): void {
+
+		if ( ! $element instanceof Widget_Base ) {
+			return;
+		}
+
+		$this->controls->register_controls(
+			$element,
+			$section_id,
+			$args
 		);
-
-		$element->end_controls_section();
 	}
 }

@@ -10,28 +10,28 @@ namespace GSAP_Elementor_Toolkit\Elementor;
 use Elementor\Widget_Base;
 
 /**
- * Elementor integration manager.
+ * Boots the Elementor integration layer.
  */
 class Elementor_Manager {
 
 	/**
-	 * Animation controls.
+	 * Controls registrar.
 	 *
 	 * @var Animation_Controls
 	 */
-	private Animation_Controls $animation_controls;
+	private Animation_Controls $controls;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param Animation_Controls|null $animation_controls Controls instance.
+	 * @param Animation_Controls|null $controls Controls registrar.
 	 */
-	public function __construct( ?Animation_Controls $animation_controls = null ) {
-		$this->animation_controls = $animation_controls ?? new Animation_Controls();
+	public function __construct( ?Animation_Controls $controls = null ) {
+		$this->controls = $controls ?? new Animation_Controls();
 	}
 
 	/**
-	 * Register Elementor hooks.
+	 * Register Elementor integration.
 	 */
 	public function register(): void {
 
@@ -40,29 +40,34 @@ class Elementor_Manager {
 		}
 
 		add_action(
-			'elementor/widget/section/advanced/before_section_end',
-			array( $this, 'register_gsap_controls' ),
+			'elementor/element/after_section_end',
+			array( $this, 'register_widget_controls' ),
 			10,
-			2
+			3
 		);
 	}
 
 	/**
-	 * Register GSAP controls.
+	 * Register controls on supported widgets.
 	 *
-	 * @param object $element Elementor element.
-	 * @param string $section_id Section ID.
+	 * @param mixed  $element Elementor element.
+	 * @param string $section_id Section identifier.
+	 * @param array  $args Section arguments.
 	 */
-	public function register_gsap_controls( object $element, string $section_id ): void {
+	public function register_widget_controls(
+		$element,
+		string $section_id,
+		array $args
+	): void {
 
 		if ( ! $element instanceof Widget_Base ) {
 			return;
 		}
 
-		if ( 'section_advanced' !== $section_id ) {
-			return;
-		}
-
-		$this->animation_controls->register_controls( $element );
+		$this->controls->register_controls(
+			$element,
+			$section_id,
+			$args
+		);
 	}
 }
