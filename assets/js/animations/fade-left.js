@@ -16,31 +16,43 @@
 
 			var config = globalScope.GSAPToolkit && globalScope.GSAPToolkit.Config && typeof globalScope.GSAPToolkit.Config.read === 'function'
 				? globalScope.GSAPToolkit.Config.read(element)
-				: {
-					duration: 0.8,
-					delay: 0,
-					ease: 'power2.out',
-					scroll: false,
-					start: 'top bottom',
-					end: 'bottom top',
-					scrub: false
-				};
+				: (globalScope.GSAPToolkit && globalScope.GSAPToolkit.Config && typeof globalScope.GSAPToolkit.Config.getDefaults === 'function'
+					? globalScope.GSAPToolkit.Config.getDefaults()
+					: {
+						duration: 0.8,
+						delay: 0,
+						ease: 'power2.out',
+						repeat: 0,
+						repeatDelay: 0,
+						yoyo: false,
+						stagger: 0,
+						once: false,
+						markers: false,
+						toggleActions: 'play none none none',
+						scroll: false,
+						start: 'top bottom',
+						end: 'bottom top',
+						scrub: false
+					});
 
 			var options = {
 				x: -60,
 				opacity: 0,
 				duration: config.duration,
 				delay: config.delay,
-				ease: config.ease
+				ease: config.ease,
+				repeat: config.repeat,
+				repeatDelay: config.repeatDelay,
+				yoyo: config.yoyo,
+				stagger: config.stagger
 			};
 
-			if (config.scroll) {
-				options.scrollTrigger = {
-					trigger: element,
-					start: config.start,
-					end: config.end,
-					scrub: config.scrub
-				};
+			var scrollTriggerOptions = globalScope.GSAPToolkit && globalScope.GSAPToolkit.Config && typeof globalScope.GSAPToolkit.Config.buildScrollTriggerOptions === 'function'
+				? globalScope.GSAPToolkit.Config.buildScrollTriggerOptions(element, config)
+				: null;
+
+			if (scrollTriggerOptions) {
+				options.scrollTrigger = scrollTriggerOptions;
 			}
 
 			globalScope.gsap.from(element, options);
