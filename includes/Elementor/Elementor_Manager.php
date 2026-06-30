@@ -7,8 +7,7 @@
 
 namespace GSAP_Elementor_Toolkit\Elementor;
 
-use Elementor\Controls_Manager;
-use Elementor\Element_Base;
+use Elementor\Widget_Base;
 
 /**
  * Elementor integration manager.
@@ -42,29 +41,17 @@ class Elementor_Manager {
 	}
 
 	/**
-	 * Register GSAP controls for supported elements.
+	 * Register GSAP controls for supported widget elements.
 	 *
-	 * @param Element_Base $element Elementor element instance.
+	 * @param object $element Elementor element instance.
 	 * @param string $section_id Section identifier.
 	 * @param array<mixed> $args Section arguments.
 	 */
-	public function register_gsap_controls( Element_Base $element, string $section_id, array $args = array() ): void {
-		if ( 'section_advanced' !== $section_id || ! $this->is_supported_element( $element ) ) {
+	public function register_gsap_controls( object $element, string $section_id, array $args = array() ): void {
+		if ( 'section_advanced' !== $section_id || ! $element instanceof Widget_Base ) {
 			return;
 		}
 
 		$this->animation_controls->register_controls( $element, $args );
-	}
-
-	/**
-	 * Determine whether the element can receive the controls.
-	 *
-	 * @param Element_Base $element Elementor element instance.
-	 * @return bool
-	 */
-	private function is_supported_element( Element_Base $element ): bool {
-		$element_type = $element->get_type();
-
-		return in_array( $element_type, array( 'section', 'column', 'container', 'widget' ), true );
 	}
 }
