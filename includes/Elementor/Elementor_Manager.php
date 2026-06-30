@@ -21,11 +21,11 @@ class Elementor_Manager {
 			return;
 		}
 
-		add_action( 'elementor/element/after_section_end', array( $this, 'register_gsap_controls' ), 10, 3 );
+		add_action( 'elementor/widget/section/advanced/before_section_end', array( $this, 'register_gsap_controls' ), 10, 2 );
 	}
 
-	public function register_gsap_controls( object $element, string $section_id, array $args = array() ): void {
-		if ( 'section_advanced' !== $section_id || ! $element instanceof Widget_Base ) {
+	public function register_gsap_controls( Widget_Base $element, string $section_id ): void {
+		if ( 'section_advanced' !== $section_id ) {
 			return;
 		}
 
