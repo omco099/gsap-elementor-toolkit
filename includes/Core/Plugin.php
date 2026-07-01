@@ -11,7 +11,6 @@ use GSAP_Elementor_Toolkit\Admin\Admin;
 use GSAP_Elementor_Toolkit\Elementor\Animation_Controls;
 use GSAP_Elementor_Toolkit\Elementor\Elementor_Manager;
 use GSAP_Elementor_Toolkit\Elementor\Hooks\Widget_Hooks;
-use GSAP_Elementor_Toolkit\Elementor\Renderer\Attribute_Renderer;
 use GSAP_Elementor_Toolkit\Elementor\Support\Compatibility;
 use GSAP_Elementor_Toolkit\Elementor\Support\Widget_Filter;
 use GSAP_Elementor_Toolkit\GSAP\GSAPRegistry;
@@ -25,6 +24,7 @@ use GSAP_Elementor_Toolkit\Helpers\Settings;
  * Core plugin bootstrapper.
  */
 class Plugin {
+
 	/**
 	 * Asset registry instance.
 	 *
@@ -33,21 +33,21 @@ class Plugin {
 	private Assets $assets;
 
 	/**
-	 * WordPress asset loader instance.
+	 * WordPress asset loader.
 	 *
 	 * @var WordPressAssetLoader
 	 */
 	private WordPressAssetLoader $asset_loader;
 
 	/**
-	 * GSAP provider registry.
+	 * GSAP registry.
 	 *
 	 * @var GSAPRegistry
 	 */
 	private GSAPRegistry $gsap_registry;
 
 	/**
-	 * Plugin settings helper.
+	 * Settings helper.
 	 *
 	 * @var Settings
 	 */
@@ -68,21 +68,14 @@ class Plugin {
 	private Elementor_Manager $elementor;
 
 	/**
-	 * GSAP integration placeholder.
+	 * GSAP manager.
 	 *
 	 * @var GsapManager
 	 */
 	private GsapManager $gsap;
 
 	/**
-	 * Initialize the plugin services.
-	 *
-	 * @param Assets|null $assets Optional asset registry instance.
-	 * @param WordPressAssetLoader|null $asset_loader Optional WordPress asset loader.
-	 * @param Settings|null $settings Optional settings service.
-	 * @param Admin|null $admin Optional admin service.
-	 * @param Elementor_Manager|null $elementor Optional Elementor service.
-	 * @param GsapManager|null $gsap Optional GSAP service.
+	 * Constructor.
 	 */
 	public function __construct(
 		?Assets $assets = null,
@@ -92,56 +85,62 @@ class Plugin {
 		?Elementor_Manager $elementor = null,
 		?GsapManager $gsap = null
 	) {
-		$this->assets       = $assets ?? $this->create_assets();
-		$this->asset_loader = $asset_loader ?? $this->create_asset_loader( $this->assets );
+		$this->assets        = $assets ?? $this->create_assets();
+		$this->asset_loader  = $asset_loader ?? $this->create_asset_loader( $this->assets );
 		$this->gsap_registry = $this->create_gsap_registry();
-		$this->settings     = $settings ?? $this->create_settings();
-		$this->admin        = $admin ?? $this->create_admin();
-		$this->elementor    = $elementor ?? $this->create_elementor();
-		$this->gsap         = $gsap ?? $this->create_gsap();
+		$this->settings      = $settings ?? $this->create_settings();
+		$this->admin         = $admin ?? $this->create_admin();
+		$this->elementor     = $elementor ?? $this->create_elementor();
+		$this->gsap          = $gsap ?? $this->create_gsap();
 	}
 
 	/**
-	 * Boot the plugin and register hooks.
+	 * Boot plugin.
 	 */
 	public function run(): void {
+
 		$this->load_textdomain();
+
 		$this->gsap_registry->register( $this->assets );
+
 		$this->asset_loader->register();
+
 		$this->admin->register();
+
 		$this->elementor->register();
+
 		$this->gsap->register();
 	}
 
 	/**
-	 * Create the asset registry.
-	 *
-	 * @return Assets
+	 * Create assets.
 	 */
 	private function create_assets(): Assets {
+
 		$assets = new Assets();
+
 		$assets->registerDefaultAssets();
 
 		return $assets;
 	}
 
 	/**
-	 * Create the WordPress asset loader.
-	 *
-	 * @param Assets $assets Asset registry.
-	 * @return WordPressAssetLoader
+	 * Create asset loader.
 	 */
-	private function create_asset_loader( Assets $assets ): WordPressAssetLoader {
+	private function create_asset_loader(
+		Assets $assets
+	): WordPressAssetLoader {
+
 		return new WordPressAssetLoader( $assets );
 	}
 
 	/**
-	 * Create the GSAP registry and register built-in providers.
-	 *
-	 * @return GSAPRegistry
+	 * Create GSAP registry.
 	 */
 	private function create_gsap_registry(): GSAPRegistry {
+
 		$registry = new GSAPRegistry();
+
 		$registry->add( new CoreProvider() );
 		$registry->add( new ScrollTriggerProvider() );
 		$registry->add( new ObserverProvider() );
@@ -150,52 +149,59 @@ class Plugin {
 	}
 
 	/**
-	 * Create the settings helper.
-	 *
-	 * @return Settings
+	 * Create settings.
 	 */
 	private function create_settings(): Settings {
+
 		return new Settings();
 	}
 
 	/**
-	 * Create the admin integration service.
-	 *
-	 * @return Admin
+	 * Create admin integration.
 	 */
 	private function create_admin(): Admin {
+
 		return new Admin();
 	}
 
 	/**
-	 * Create the Elementor integration service.
-	 *
-	 * @return Elementor_Manager
+	 * Create Elementor integration.
 	 */
 	private function create_elementor(): Elementor_Manager {
+
+		$compatibility = new Compatibility();
+
+		$widget_filter = new Widget_Filter();
+
+		$controls = new Animation_Controls();
+
+		$widget_hooks = new Widget_Hooks(
+			$widget_filter,
+			$controls
+		);
+
 		return new Elementor_Manager(
-			new Animation_Controls(),
-			new Widget_Hooks(),
-			new Attribute_Renderer(),
-			new Compatibility(),
-			new Widget_Filter()
+			$compatibility,
+			$widget_hooks,
+			$widget_filter,
+			$controls
 		);
 	}
 
 	/**
-	 * Create the GSAP integration placeholder service.
-	 *
-	 * @return GsapManager
+	 * Create GSAP manager.
 	 */
 	private function create_gsap(): GsapManager {
+
 		return new GsapManager();
 	}
 
 	/**
-	 * Load the plugin text domain.
+	 * Load translations.
 	 */
 	private function load_textdomain(): void {
-		\load_plugin_textdomain(
+
+		load_plugin_textdomain(
 			GSAP_ELEMENTOR_TOOLKIT_TEXT_DOMAIN,
 			false,
 			dirname( GSAP_ELEMENTOR_TOOLKIT_BASENAME ) . '/languages/'
