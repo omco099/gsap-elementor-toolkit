@@ -8,7 +8,12 @@
 namespace GSAP_Elementor_Toolkit\Core;
 
 use GSAP_Elementor_Toolkit\Admin\Admin;
+use GSAP_Elementor_Toolkit\Elementor\Animation_Controls;
 use GSAP_Elementor_Toolkit\Elementor\Elementor_Manager;
+use GSAP_Elementor_Toolkit\Elementor\Hooks\Widget_Hooks;
+use GSAP_Elementor_Toolkit\Elementor\Renderer\Attribute_Renderer;
+use GSAP_Elementor_Toolkit\Elementor\Support\Compatibility;
+use GSAP_Elementor_Toolkit\Elementor\Support\Widget_Filter;
 use GSAP_Elementor_Toolkit\GSAP\GSAPRegistry;
 use GSAP_Elementor_Toolkit\GSAP\Manager as GsapManager;
 use GSAP_Elementor_Toolkit\GSAP\Providers\CoreProvider;
@@ -168,7 +173,13 @@ class Plugin {
 	 * @return Elementor_Manager
 	 */
 	private function create_elementor(): Elementor_Manager {
-		return new Elementor_Manager();
+		return new Elementor_Manager(
+			new Animation_Controls(),
+			new Widget_Hooks(),
+			new Attribute_Renderer(),
+			new Compatibility(),
+			new Widget_Filter()
+		);
 	}
 
 	/**

@@ -1,73 +1,61 @@
 <?php
 /**
- * Elementor integration manager.
+ * Elementor animation controls.
  *
  * @package GSAP_Elementor_Toolkit\Elementor
  */
 
 namespace GSAP_Elementor_Toolkit\Elementor;
 
-use Elementor\Widget_Base;
+use Elementor\Controls_Manager;
+use Elementor\Element_Base;
 
 /**
- * Boots the Elementor integration layer.
+ * Registers GSAP controls for Elementor widgets.
  */
-class Elementor_Manager {
+class Animation_Controls {
 
 	/**
-	 * Controls registrar.
+	 * Section ID.
+	 */
+	private const SECTION_ID = 'gsap_animation';
+
+	/**
+	 * Enable control ID.
+	 */
+	private const ENABLE_CONTROL = 'gsap_enable';
+
+	/**
+	 * Register GSAP controls.
 	 *
-	 * @var Animation_Controls
+	 * @param Element_Base $element Elementor element.
 	 */
-	private Animation_Controls $controls;
+	public function register_controls( Element_Base $element ): void {
 
-	/**
-	 * Constructor.
-	 *
-	 * @param Animation_Controls|null $controls Controls registrar.
-	 */
-	public function __construct( ?Animation_Controls $controls = null ) {
-		$this->controls = $controls ?? new Animation_Controls();
-	}
-
-	/**
-	 * Register Elementor integration.
-	 */
-	public function register(): void {
-
-		if ( ! did_action( 'elementor/loaded' ) ) {
-			return;
-		}
-
-		add_action(
-			'elementor/element/after_section_end',
-			array( $this, 'register_widget_controls' ),
-			10,
-			3
+		$element->start_controls_section(
+			self::SECTION_ID,
+			array(
+				'label' => esc_html__(
+					'GSAP Animation',
+					'gsap-elementor-toolkit'
+				),
+				'tab'   => Controls_Manager::TAB_ADVANCED,
+			)
 		);
-	}
 
-	/**
-	 * Register controls on supported widgets.
-	 *
-	 * @param mixed  $element Elementor element.
-	 * @param string $section_id Section identifier.
-	 * @param array  $args Section arguments.
-	 */
-	public function register_widget_controls(
-		$element,
-		string $section_id,
-		array $args
-	): void {
-
-		if ( ! $element instanceof Widget_Base ) {
-			return;
-		}
-
-		$this->controls->register_controls(
-			$element,
-			$section_id,
-			$args
+		$element->add_control(
+			self::ENABLE_CONTROL,
+			array(
+				'label'        => esc_html__(
+					'Enable Animation',
+					'gsap-elementor-toolkit'
+				),
+				'type'         => Controls_Manager::SWITCHER,
+				'default'      => '',
+				'return_value' => 'yes',
+			)
 		);
+
+		$element->end_controls_section();
 	}
 }

@@ -7,7 +7,9 @@
 
 namespace GSAP_Elementor_Toolkit\Elementor;
 
-use Elementor\Widget_Base;
+use GSAP_Elementor_Toolkit\Elementor\Hooks\Widget_Hooks;
+use GSAP_Elementor_Toolkit\Elementor\Support\Compatibility;
+use GSAP_Elementor_Toolkit\Elementor\Support\Widget_Filter;
 
 /**
  * Boots the Elementor integration layer.
@@ -15,59 +17,54 @@ use Elementor\Widget_Base;
 class Elementor_Manager {
 
 	/**
-	 * Controls registrar.
+	 * Compatibility checker.
 	 *
-	 * @var Animation_Controls
+	 * @var Compatibility
 	 */
-	private Animation_Controls $controls;
+	private Compatibility $compatibility;
+
+	/**
+	 * Widget hooks.
+	 *
+	 * @var Widget_Hooks
+	 */
+	private Widget_Hooks $widget_hooks;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param Animation_Controls|null $controls Controls registrar.
+	 * @param Compatibility|null     $compatibility Compatibility service.
+	 * @param Widget_Hooks|null      $widget_hooks Widget hooks service.
+	 * @param Widget_Filter|null     $widget_filter Widget filter service.
+	 * @param Animation_Controls|null $controls Controls service.
 	 */
-	public function __construct( ?Animation_Controls $controls = null ) {
-		$this->controls = $controls ?? new Animation_Controls();
+	public function __construct(
+		?Compatibility $compatibility = null,
+		?Widget_Hooks $widget_hooks = null,
+		?Widget_Filter $widget_filter = null,
+		?Animation_Controls $controls = null
+	) {
+
+		$this->compatibility = $compatibility ?? new Compatibility();
+
+		$widget_filter = $widget_filter ?? new Widget_Filter();
+		$controls      = $controls ?? new Animation_Controls();
+
+		$this->widget_hooks = $widget_hooks ?? new Widget_Hooks(
+			$widget_filter,
+			$controls
+		);
 	}
 
 	/**
-	 * Register Elementor integration.
+	 * Boot Elementor integration.
 	 */
 	public function register(): void {
 
-		if ( ! did_action( 'elementor/loaded' ) ) {
+		if ( ! $this->compatibility->can_boot() ) {
 			return;
 		}
 
-		add_action(
-			'elementor/element/after_section_end',
-			array( $this, 'register_widget_controls' ),
-			10,
-			3
-		);
-	}
-
-	/**
-	 * Register controls on supported widgets.
-	 *
-	 * @param mixed  $element Elementor element.
-	 * @param string $section_id Section identifier.
-	 * @param array  $args Section arguments.
-	 */
-	public function register_widget_controls(
-		$element,
-		string $section_id,
-		array $args
-	): void {
-
-		if ( ! $element instanceof Widget_Base ) {
-			return;
-		}
-
-		$this->controls->register_controls(
-			$element,
-			$section_id,
-			$args
-		);
+		$this->widget_hooks->register();
 	}
 }
