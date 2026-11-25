@@ -72,7 +72,7 @@ class Assets {
 		$this->add( new Asset( 'gsap-elementor-toolkit-presets', 'assets/js/presets.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap-elementor-toolkit-engine' ), $v, true ) );
 
 		$this->add( new Asset( self::SCANNER_ENTRY, 'assets/js/scanner.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap-elementor-toolkit-presets' ), $v, true ) );
-		$this->add( new Asset( self::ELEMENTOR_ENTRY, 'assets/js/elementor-handler.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap-elementor-toolkit-presets', 'jquery', 'elementor-frontend' ), $v, true ) );
+		$this->add( new Asset( self::ELEMENTOR_ENTRY, 'assets/js/elementor-handler.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap-elementor-toolkit-presets', 'jquery' ), $v, true ) );
 	}
 
 	/**

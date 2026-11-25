@@ -73,6 +73,10 @@ class WordPressAssetLoader {
 
 		$js = "(function(d){var h=d.documentElement;h.classList.add('gsap-et-js');setTimeout(function(){h.classList.add('gsap-et-timeout');},3000);})(document);";
 
+		// Printed in <head> so animated elements are hidden before the first paint
+		// (frontend.css may only load in the footer).
+		echo '<style id="gsap-elementor-toolkit-head-css">html.gsap-et-js:not(.gsap-et-timeout) body:not(.elementor-editor-active) .gsap-et-yes:not(.gsap-et-done){visibility:hidden}@media (prefers-reduced-motion:reduce){html.gsap-et-js body .gsap-et-yes{visibility:visible}}</style>' . "\n";
+
 		if ( function_exists( 'wp_print_inline_script_tag' ) ) {
 			wp_print_inline_script_tag( $js, array( 'id' => 'gsap-elementor-toolkit-head' ) );
 			return;

@@ -7,6 +7,7 @@
 
 namespace GSAP_Elementor_Toolkit\Elementor;
 
+use Elementor\Element_Base;
 use GSAP_Elementor_Toolkit\Core\Assets;
 use GSAP_Elementor_Toolkit\Elementor\Hooks\Widget_Hooks;
 use GSAP_Elementor_Toolkit\Elementor\Support\Compatibility;
@@ -69,10 +70,47 @@ class Elementor_Manager {
 
 		$this->widget_hooks->register();
 
+		// Live site: write the settings on the element itself and load the scripts
+		// only when an animated element is actually rendered.
+		add_action( 'elementor/frontend/before_render', array( $this, 'before_render' ) );
+
 		// Live site + editor preview iframe (both render the Elementor frontend).
 		add_action( 'elementor/frontend/after_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'elementor/frontend/after_enqueue_styles', array( $this, 'enqueue_styles' ) );
 		add_action( 'elementor/preview/enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+	}
+
+	/**
+	 * Adds data-gsap-et="{...settings}" to the wrapper of every animated element.
+	 *
+	 * The live site reads this attribute directly, so it does not depend on
+	 * Elementor's data-settings attribute or on the timing of Elementor's
+	 * frontend init event (both can differ between Elementor versions).
+	 *
+	 * @param mixed $element Element being rendered.
+	 */
+	public function before_render( $element ): void {
+		if ( ! $element instanceof Element_Base ) {
+			return;
+		}
+
+		$settings = $element->get_settings_for_display();
+
+		if ( ! is_array( $settings ) || 'yes' !== ( $settings[ Animation_Controls::ENABLE_CONTROL ] ?? '' ) ) {
+			return;
+		}
+
+		$config = array();
+		foreach ( $settings as $key => $value ) {
+			if ( 0 === strpos( (string) $key, 'gsap_' ) ) {
+				$config[ $key ] = $value;
+			}
+		}
+
+		$element->add_render_attribute( '_wrapper', 'data-gsap-et', wp_json_encode( $config ) );
+
+		$this->enqueue_scripts();
+		$this->enqueue_styles();
 	}
 
 	/**
