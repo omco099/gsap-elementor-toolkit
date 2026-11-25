@@ -6,6 +6,7 @@
  * Version: 1.0.0
  * Requires at least: 6.4
  * Requires PHP: 8.1
+ * Requires Plugins: elementor
  * Author: Your Name
  * License: GPL-2.0-or-later
  * Text Domain: gsap-elementor-toolkit
@@ -37,21 +38,6 @@ if ( ! defined( 'GSAP_ELEMENTOR_TOOLKIT_TEXT_DOMAIN' ) ) {
 	define( 'GSAP_ELEMENTOR_TOOLKIT_TEXT_DOMAIN', 'gsap-elementor-toolkit' );
 }
 
-if ( file_exists( GSAP_ELEMENTOR_TOOLKIT_DIR . 'vendor/autoload.php' ) ) {
-	require_once GSAP_ELEMENTOR_TOOLKIT_DIR . 'vendor/autoload.php';
-} else {
-	spl_autoload_register( 'gsap_elementor_toolkit_autoload' );
-}
-
-require_once GSAP_ELEMENTOR_TOOLKIT_DIR . 'includes/Core/Plugin.php';
-
-use GSAP_Elementor_Toolkit\Core\Plugin;
-
-if ( class_exists( Plugin::class ) ) {
-	$gsap_elementor_toolkit_plugin = new Plugin();
-	$gsap_elementor_toolkit_plugin->run();
-}
-
 /**
  * Load classes for the plugin when Composer autoload is unavailable.
  *
@@ -64,9 +50,36 @@ function gsap_elementor_toolkit_autoload( string $class ): void {
 	}
 
 	$relative_class = substr( $class, strlen( $prefix ) );
-	$file = GSAP_ELEMENTOR_TOOLKIT_DIR . 'includes/' . str_replace( '\\', '/', $relative_class ) . '.php';
+	$file           = GSAP_ELEMENTOR_TOOLKIT_DIR . 'includes/' . str_replace( '\\', '/', $relative_class ) . '.php';
 
 	if ( file_exists( $file ) ) {
 		require_once $file;
 	}
 }
+
+if ( file_exists( GSAP_ELEMENTOR_TOOLKIT_DIR . 'vendor/autoload.php' ) ) {
+	require_once GSAP_ELEMENTOR_TOOLKIT_DIR . 'vendor/autoload.php';
+} else {
+	spl_autoload_register( 'gsap_elementor_toolkit_autoload' );
+}
+
+/**
+ * Boot the plugin after every plugin (including Elementor) has been loaded.
+ * Booting at file-load time depended on plugin load order and loaded
+ * translations too early.
+ */
+add_action(
+	'plugins_loaded',
+	static function (): void {
+		$plugin = new \GSAP_Elementor_Toolkit\Core\Plugin();
+		$plugin->run();
+
+		/**
+		 * Fires once the free plugin is fully booted.
+		 * The Pro add-on hooks here to extend it.
+		 *
+		 * @param \GSAP_Elementor_Toolkit\Core\Plugin $plugin Plugin instance.
+		 */
+		do_action( 'gsap_elementor_toolkit/loaded', $plugin );
+	}
+);

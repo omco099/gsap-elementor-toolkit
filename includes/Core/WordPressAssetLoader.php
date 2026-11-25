@@ -8,7 +8,9 @@
 namespace GSAP_Elementor_Toolkit\Core;
 
 /**
- * Responsible for registering and enqueuing assets with WordPress.
+ * Registers assets with WordPress. Frontend files are only *registered* here;
+ * they are enqueued on demand (Elementor pages) by Elementor_Manager so pages
+ * without animations do not download GSAP.
  */
 class WordPressAssetLoader {
 	/**
@@ -28,12 +30,13 @@ class WordPressAssetLoader {
 	}
 
 	/**
-	 * Register hook callbacks and WordPress asset registrations.
+	 * Register hook callbacks.
 	 */
 	public function register(): void {
-		$this->registerAssets();
+		// Registering before `init` triggers a "_doing_it_wrong" notice.
+		add_action( 'init', array( $this, 'registerAssets' ) );
+		add_action( 'wp_head', array( $this, 'printHeadScript' ), 1 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueueFrontend' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueueAdmin' ) );
 	}
 
 	/**
@@ -46,17 +49,36 @@ class WordPressAssetLoader {
 	}
 
 	/**
-	 * Enqueue frontend assets.
+	 * Enqueue the stand-alone scanner on every page only when explicitly allowed.
+	 * Use: add_filter( 'gsap_elementor_toolkit/load_everywhere', '__return_true' );
 	 */
 	public function enqueueFrontend(): void {
-		$this->enqueueArea( Asset::AREA_FRONTEND );
+		if ( ! apply_filters( 'gsap_elementor_toolkit/load_everywhere', false ) ) {
+			return;
+		}
+
+		wp_enqueue_style( Assets::FRONTEND_STYLE );
+		wp_enqueue_script( Assets::SCANNER_ENTRY );
 	}
 
 	/**
-	 * Enqueue admin assets.
+	 * Tiny inline script in <head>: marks that JS is running so animated
+	 * elements can be hidden before first paint (prevents a "flash" before
+	 * GSAP starts). A safety timer reveals everything if GSAP never loads.
 	 */
-	public function enqueueAdmin(): void {
-		$this->enqueueArea( Asset::AREA_ADMIN );
+	public function printHeadScript(): void {
+		if ( is_admin() ) {
+			return;
+		}
+
+		$js = "(function(d){var h=d.documentElement;h.classList.add('gsap-et-js');setTimeout(function(){h.classList.add('gsap-et-timeout');},3000);})(document);";
+
+		if ( function_exists( 'wp_print_inline_script_tag' ) ) {
+			wp_print_inline_script_tag( $js, array( 'id' => 'gsap-elementor-toolkit-head' ) );
+			return;
+		}
+
+		echo '<script id="gsap-elementor-toolkit-head">' . $js . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 
 	/**
@@ -71,22 +93,6 @@ class WordPressAssetLoader {
 		}
 
 		wp_register_script( $asset->getHandle(), $this->resolveSource( $asset->getSource() ), $asset->getDependencies(), $asset->getVersion(), $asset->isFooter() );
-	}
-
-	/**
-	 * Enqueue assets for the requested area.
-	 *
-	 * @param string $area Asset area.
-	 */
-	private function enqueueArea( string $area ): void {
-		foreach ( $this->assets->forArea( $area ) as $asset ) {
-			if ( Asset::TYPE_STYLE === $asset->getType() ) {
-				wp_enqueue_style( $asset->getHandle() );
-				continue;
-			}
-
-			wp_enqueue_script( $asset->getHandle() );
-		}
 	}
 
 	/**

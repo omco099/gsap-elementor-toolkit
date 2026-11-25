@@ -8,6 +8,7 @@
 namespace GSAP_Elementor_Toolkit\Core;
 
 use GSAP_Elementor_Toolkit\Admin\Admin;
+use GSAP_Elementor_Toolkit\Animations\Preset_Library;
 use GSAP_Elementor_Toolkit\Elementor\Animation_Controls;
 use GSAP_Elementor_Toolkit\Elementor\Elementor_Manager;
 use GSAP_Elementor_Toolkit\Elementor\Hooks\Widget_Hooks;
@@ -45,6 +46,13 @@ class Plugin {
 	 * @var GSAPRegistry
 	 */
 	private GSAPRegistry $gsap_registry;
+
+	/**
+	 * Animation preset library.
+	 *
+	 * @var Preset_Library
+	 */
+	private Preset_Library $presets;
 
 	/**
 	 * Settings helper.
@@ -88,6 +96,7 @@ class Plugin {
 		$this->assets        = $assets ?? $this->create_assets();
 		$this->asset_loader  = $asset_loader ?? $this->create_asset_loader( $this->assets );
 		$this->gsap_registry = $this->create_gsap_registry();
+		$this->presets       = new Preset_Library();
 		$this->settings      = $settings ?? $this->create_settings();
 		$this->admin         = $admin ?? $this->create_admin();
 		$this->elementor     = $elementor ?? $this->create_elementor();
@@ -99,7 +108,7 @@ class Plugin {
 	 */
 	public function run(): void {
 
-		$this->load_textdomain();
+		add_action( 'init', array( $this, 'load_textdomain' ) );
 
 		$this->gsap_registry->register( $this->assets );
 
@@ -110,6 +119,20 @@ class Plugin {
 		$this->elementor->register();
 
 		$this->gsap->register();
+	}
+
+	/**
+	 * Asset registry (used by the Pro add-on to add its own files).
+	 */
+	public function assets(): Assets {
+		return $this->assets;
+	}
+
+	/**
+	 * Preset library.
+	 */
+	public function presets(): Preset_Library {
+		return $this->presets;
 	}
 
 	/**
@@ -173,7 +196,7 @@ class Plugin {
 
 		$widget_filter = new Widget_Filter();
 
-		$controls = new Animation_Controls();
+		$controls = new Animation_Controls( $this->presets );
 
 		$widget_hooks = new Widget_Hooks(
 			$widget_filter,
@@ -197,9 +220,9 @@ class Plugin {
 	}
 
 	/**
-	 * Load translations.
+	 * Load translations (must run on `init` or later since WP 6.7).
 	 */
-	private function load_textdomain(): void {
+	public function load_textdomain(): void {
 
 		load_plugin_textdomain(
 			GSAP_ELEMENTOR_TOOLKIT_TEXT_DOMAIN,
