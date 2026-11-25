@@ -12,6 +12,7 @@ use GSAP_Elementor_Toolkit\Core\Assets;
 use GSAP_Elementor_Toolkit\Elementor\Hooks\Widget_Hooks;
 use GSAP_Elementor_Toolkit\Elementor\Support\Compatibility;
 use GSAP_Elementor_Toolkit\Elementor\Support\Widget_Filter;
+use GSAP_Elementor_Toolkit\GSAP\Providers\TextPluginsProvider;
 
 /**
  * Boots the Elementor integration layer.
@@ -77,7 +78,7 @@ class Elementor_Manager {
 		// Live site + editor preview iframe (both render the Elementor frontend).
 		add_action( 'elementor/frontend/after_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'elementor/frontend/after_enqueue_styles', array( $this, 'enqueue_styles' ) );
-		add_action( 'elementor/preview/enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		add_action( 'elementor/preview/enqueue_scripts', array( $this, 'enqueue_preview_scripts' ) );
 	}
 
 	/**
@@ -111,6 +112,49 @@ class Elementor_Manager {
 
 		$this->enqueue_scripts();
 		$this->enqueue_styles();
+
+		foreach ( $this->plugins_for( $config ) as $handle ) {
+			wp_enqueue_script( $handle );
+		}
+	}
+
+	/**
+	 * Extra GSAP plugin files an element needs (none for most types).
+	 *
+	 * @param array<string, mixed> $config Element gsap_* settings.
+	 * @return array<int, string> Script handles.
+	 */
+	private function plugins_for( array $config ): array {
+		if ( 'text' !== ( $config[ Animation_Controls::TYPE_CONTROL ] ?? '' ) ) {
+			return array();
+		}
+
+		$effect = (string) ( $config['gsap_text_effect'] ?? 'split-words' );
+
+		if ( 'scramble' === $effect ) {
+			return array( 'gsap-scramble-text' );
+		}
+
+		if ( 'typewriter' === $effect ) {
+			return array( 'gsap-text-plugin' );
+		}
+
+		if ( 0 === strpos( $effect, 'split-' ) ) {
+			return array( 'gsap-split-text' );
+		}
+
+		return array();
+	}
+
+	/**
+	 * Editor preview: load everything, since the user can switch to any type.
+	 */
+	public function enqueue_preview_scripts(): void {
+		$this->enqueue_scripts();
+
+		foreach ( array_keys( TextPluginsProvider::PLUGINS ) as $handle ) {
+			wp_enqueue_script( $handle );
+		}
 	}
 
 	/**

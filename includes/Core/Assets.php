@@ -28,6 +28,11 @@ class Assets {
 	public const FRONTEND_STYLE = 'gsap-elementor-toolkit-frontend';
 
 	/**
+	 * Animation types; each one is a file in assets/js/effects/.
+	 */
+	public const EFFECTS = array( 'entrance', 'scroll', 'mouse', 'loop', 'text' );
+
+	/**
 	 * Plugin version string.
 	 *
 	 * @var string
@@ -55,8 +60,12 @@ class Assets {
 	 *
 	 * Load order (each file depends on the previous one):
 	 * gsap -> scroll-trigger -> runtime -> registry -> config -> engine -> presets
+	 *   -> effects/entrance, scroll, mouse, loop, text   (one file per animation type)
 	 *   -> scanner   (plain HTML with data-gsap attributes)
 	 *   -> elementor (Elementor widgets / containers)
+	 *
+	 * Extra GSAP plugins (SplitText, ScrambleText, TextPlugin) are registered by
+	 * their providers and enqueued only on pages that use them.
 	 */
 	public function registerDefaultAssets(): void {
 		$v = $this->version;
@@ -71,8 +80,15 @@ class Assets {
 		$this->add( new Asset( 'gsap-elementor-toolkit-engine', 'assets/js/engine.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap-elementor-toolkit-config' ), $v, true ) );
 		$this->add( new Asset( 'gsap-elementor-toolkit-presets', 'assets/js/presets.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap-elementor-toolkit-engine' ), $v, true ) );
 
-		$this->add( new Asset( self::SCANNER_ENTRY, 'assets/js/scanner.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap-elementor-toolkit-presets' ), $v, true ) );
-		$this->add( new Asset( self::ELEMENTOR_ENTRY, 'assets/js/elementor-handler.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap-elementor-toolkit-presets', 'jquery' ), $v, true ) );
+		$effect_handles = array();
+		foreach ( self::EFFECTS as $effect ) {
+			$handle           = 'gsap-elementor-toolkit-effect-' . $effect;
+			$effect_handles[] = $handle;
+			$this->add( new Asset( $handle, 'assets/js/effects/' . $effect . '.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap-elementor-toolkit-presets' ), $v, true ) );
+		}
+
+		$this->add( new Asset( self::SCANNER_ENTRY, 'assets/js/scanner.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array( 'gsap-elementor-toolkit-effect-entrance' ), $v, true ) );
+		$this->add( new Asset( self::ELEMENTOR_ENTRY, 'assets/js/elementor-handler.js', Asset::TYPE_SCRIPT, Asset::AREA_FRONTEND, array_merge( $effect_handles, array( 'jquery' ) ), $v, true ) );
 	}
 
 	/**

@@ -18,3 +18,35 @@ html.gsap-et-js:not(.gsap-et-timeout) body:not(.elementor-editor-active) .gsap-e
 		visibility: visible;
 	}
 }
+
+/* Typewriter cursor (text animation type). */
+.gsap-et-cursor {
+	display: inline-block;
+	margin-inline-start: 0.05em;
+	font-weight: 400;
+	animation: gsap-et-blink 0.9s steps(1) infinite;
+}
+
+@keyframes gsap-et-blink {
+	50% {
+		opacity: 0;
+	}
+}
+
+/*
+ * Horizontal scroll: children stay on one row at their own width
+ * (give each child a width such as 80vw), and the extra width is hidden.
+ */
+.gsap-et-horizontal {
+	overflow: hidden;
+}
+
+.gsap-et-horizontal,
+.gsap-et-horizontal > .e-con-inner {
+	flex-wrap: nowrap !important;
+}
+
+.gsap-et-horizontal > .elementor-element,
+.gsap-et-horizontal > .e-con-inner > .elementor-element {
+	flex-shrink: 0;
+}

@@ -2,7 +2,10 @@
  * Normalises animation settings coming from two sources:
  *  - Elementor control values  -> Config.fromElementor(settings)
  *  - HTML data-* attributes     -> Config.fromAttributes(element)
- * Both return the same plain config object used by the Engine.
+ *
+ * Both return the same object. The common fields (type, trigger, duration...)
+ * are normalised here; each effect reads its own extra fields from
+ * config.settings with the helpers Config.num / Config.str / Config.bool.
  */
 (function () {
 	'use strict';
@@ -10,6 +13,7 @@
 	var globalScope = window;
 
 	var defaults = {
+		type: 'entrance', // entrance | scroll | mouse | loop | text
 		animation: 'fade-up',
 		trigger: 'scroll', // 'scroll' | 'load'
 		duration: 0.8,
@@ -92,16 +96,29 @@
 			Object.keys(defaults).forEach(function (key) {
 				copy[key] = Array.isArray(defaults[key]) ? defaults[key].slice() : defaults[key];
 			});
+			copy.settings = {};
 			return copy;
 		},
 
+		// Helpers for effects: read one raw setting with a fallback.
+		num: function num(settings, key, fallback) {
+			return toNumber(settings && settings[key], fallback);
+		},
+		str: function str(settings, key, fallback) {
+			return toString(settings && settings[key], fallback);
+		},
+		bool: function bool(settings, key, fallback) {
+			return toBoolean(settings && settings[key], fallback);
+		},
+
 		/**
-		 * @param {Object} settings Result of elementor handler getElementSettings().
+		 * @param {Object} settings Element settings (gsap_* keys).
 		 */
 		fromElementor: function fromElementor(settings) {
 			settings = settings || {};
 
 			return {
+				type: toString(settings.gsap_type, defaults.type),
 				animation: toString(settings.gsap_animation, defaults.animation),
 				trigger: toString(settings.gsap_trigger, defaults.trigger),
 				duration: toNumber(settings.gsap_duration, defaults.duration),
@@ -112,7 +129,8 @@
 				end: defaults.end,
 				once: toBoolean(settings.gsap_once, defaults.once),
 				markers: false,
-				disableOn: toList(settings.gsap_disable_on)
+				disableOn: toList(settings.gsap_disable_on),
+				settings: settings
 			};
 		},
 
@@ -135,6 +153,7 @@
 			}
 
 			return {
+				type: 'entrance',
 				animation: toString(attr('gsap'), defaults.animation),
 				trigger: toString(trigger, defaults.trigger),
 				duration: toNumber(attr('duration'), defaults.duration),
@@ -145,7 +164,8 @@
 				end: toString(attr('end'), defaults.end),
 				once: toBoolean(attr('once'), defaults.once),
 				markers: toBoolean(attr('markers'), defaults.markers),
-				disableOn: toList(attr('disable-on'))
+				disableOn: toList(attr('disable-on')),
+				settings: {}
 			};
 		},
 

@@ -1,7 +1,11 @@
 /**
- * Engine: turns (element + config) into a GSAP tween.
- * One place handles ScrollTrigger, reduced motion, cleanup and the
- * "hidden until animated" class, so presets only describe the start state.
+ * Engine: runs one animation "type" (effect) on an element.
+ *
+ * Every effect lives in its own file under assets/js/effects/ and registers
+ * itself with Engine.registerEffect(type, fn). The engine handles what all
+ * types share: reduced motion, "disable on device", the hidden-until-animated
+ * class, and cleanup (every tween / ScrollTrigger / SplitText an effect makes
+ * is created inside a gsap.context, so one revert() undoes all of it).
  */
 (function () {
 	'use strict';
@@ -9,7 +13,8 @@
 	var globalScope = window;
 	var PENDING_CLASS = 'gsap-et-yes';
 	var DONE_CLASS = 'gsap-et-done';
-	var STORE_KEY = '__gsapToolkitTween';
+	var STORE_KEY = '__gsapToolkitRun';
+	var effects = {};
 	var varsFilters = [];
 
 	function reveal(element) {
@@ -43,11 +48,72 @@
 		return 'desktop';
 	}
 
+	/**
+	 * Toolbox handed to every effect.
+	 */
+	var api = {
+		/**
+		 * ScrollTrigger vars for "play when it scrolls into view" effects
+		 * (entrance, text). Returns null when the trigger is "page load".
+		 */
+		inViewTrigger: function inViewTrigger(element, config) {
+			if (config.trigger !== 'scroll' || !globalScope.ScrollTrigger) {
+				return null;
+			}
+
+			return {
+				trigger: element,
+				start: config.start,
+				end: config.end,
+				once: config.once,
+				toggleActions: config.once ? 'play none none none' : 'play none none reverse',
+				markers: config.markers
+			};
+		},
+
+		// Lets the Pro add-on (or later phases) adjust tween vars.
+		filterVars: function filterVars(vars, element, config) {
+			varsFilters.forEach(function (fn) {
+				vars = fn(vars, element, config) || vars;
+			});
+			return vars;
+		},
+
+		// True on devices with a real mouse (mouse effects are skipped on touch).
+		hasMouse: function hasMouse() {
+			return !!(globalScope.matchMedia && globalScope.matchMedia('(hover: hover) and (pointer: fine)').matches);
+		},
+
+		// Registers a GSAP plugin if its file was loaded.
+		usePlugin: function usePlugin(name) {
+			var plugin = globalScope[name];
+			if (plugin && globalScope.gsap) {
+				globalScope.gsap.registerPlugin(plugin);
+				return plugin;
+			}
+			return null;
+		}
+	};
+
 	var Engine = {
 		PENDING_CLASS: PENDING_CLASS,
+		api: api,
 
 		/**
-		 * Pro add-on hook: change the GSAP vars before the tween is created.
+		 * @param {string}   type Animation type, e.g. "scroll".
+		 * @param {Function} fn   fn(element, config, api) -> optional cleanup function.
+		 */
+		registerEffect: function registerEffect(type, fn) {
+			if (type && typeof fn === 'function') {
+				effects[type] = fn;
+			}
+		},
+
+		hasEffect: function hasEffect(type) {
+			return Object.prototype.hasOwnProperty.call(effects, type);
+		},
+
+		/**
 		 * fn(vars, element, config) must return vars.
 		 */
 		addVarsFilter: function addVarsFilter(fn) {
@@ -58,75 +124,60 @@
 
 		play: function play(element, config) {
 			if (!element || !config) {
-				return null;
+				return;
 			}
 
 			Engine.kill(element);
 
 			var gsap = globalScope.gsap;
-			var registry = globalScope.GSAPToolkit && globalScope.GSAPToolkit.Registry;
-			var preset = registry ? registry.get(config.animation) : null;
+			var effect = effects[config.type || 'entrance'];
+			var disabled = (config.disableOn || []).indexOf(currentDevice()) !== -1;
 
-			if (!gsap || !preset || prefersReducedMotion() || config.disableOn.indexOf(currentDevice()) !== -1) {
+			if (!gsap || !effect || disabled || prefersReducedMotion()) {
 				reveal(element);
-				return null;
-			}
-
-			var vars = preset.build(config, element) || {};
-			vars.duration = config.duration;
-			vars.delay = config.delay;
-			vars.ease = config.ease;
-
-			if (config.trigger === 'scroll' && globalScope.ScrollTrigger) {
-				vars.scrollTrigger = {
-					trigger: element,
-					start: config.start,
-					end: config.end,
-					once: config.once,
-					toggleActions: config.once ? 'play none none none' : 'play none none reverse',
-					markers: config.markers
-				};
-			}
-
-			varsFilters.forEach(function (fn) {
-				vars = fn(vars, element, config) || vars;
-			});
-
-			var tween = gsap.from(element, vars);
-			element[STORE_KEY] = tween;
-
-			// gsap.from() has already applied the start state, so it is safe to un-hide now.
-			reveal(element);
-
-			return tween;
-		},
-
-		kill: function kill(element) {
-			var tween = element && element[STORE_KEY];
-			if (!tween) {
 				return;
 			}
 
-			if (tween.scrollTrigger) {
-				tween.scrollTrigger.kill();
+			var cleanups = [];
+			var ctx = gsap.context(function () {
+				var cleanup = effect(element, config, api);
+				if (typeof cleanup === 'function') {
+					cleanups.push(cleanup);
+				}
+			});
+
+			element[STORE_KEY] = { ctx: ctx, cleanups: cleanups };
+
+			// Every effect applies its start state synchronously, so un-hide now.
+			reveal(element);
+		},
+
+		kill: function kill(element) {
+			var run = element && element[STORE_KEY];
+			if (!run) {
+				return;
 			}
 
-			tween.kill();
+			run.cleanups.forEach(function (fn) {
+				try {
+					fn();
+				} catch (error) {
+					// Ignore: cleanup must never break the page.
+				}
+			});
+
+			run.ctx.revert();
 			delete element[STORE_KEY];
-
-			if (globalScope.gsap) {
-				globalScope.gsap.set(element, { clearProps: 'opacity,visibility,transform,filter' });
-			}
 		},
 
 		// Backwards compatibility: run from data-gsap attributes.
 		run: function run(element) {
 			var Config = globalScope.GSAPToolkit && globalScope.GSAPToolkit.Config;
 			if (!element || !Config) {
-				return null;
+				return;
 			}
 
-			return Engine.play(element, Config.fromAttributes(element));
+			Engine.play(element, Config.fromAttributes(element));
 		}
 	};
 

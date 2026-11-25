@@ -19,6 +19,7 @@ use GSAP_Elementor_Toolkit\GSAP\Manager as GsapManager;
 use GSAP_Elementor_Toolkit\GSAP\Providers\CoreProvider;
 use GSAP_Elementor_Toolkit\GSAP\Providers\ObserverProvider;
 use GSAP_Elementor_Toolkit\GSAP\Providers\ScrollTriggerProvider;
+use GSAP_Elementor_Toolkit\GSAP\Providers\TextPluginsProvider;
 use GSAP_Elementor_Toolkit\Helpers\Settings;
 
 /**
@@ -167,6 +168,7 @@ class Plugin {
 		$registry->add( new CoreProvider() );
 		$registry->add( new ScrollTriggerProvider() );
 		$registry->add( new ObserverProvider() );
+		$registry->add( new TextPluginsProvider() );
 
 		return $registry;
 	}
