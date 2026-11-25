@@ -1,1 +1,20 @@
-/* Frontend styles for GSAP Elementor Toolkit */
+/* GSAP Elementor Toolkit — frontend styles */
+
+/*
+ * Hide animated elements until GSAP has applied their start state
+ * (prevents the element flashing before it animates).
+ * - .gsap-et-js      : added in <head> only when JavaScript runs.
+ * - .gsap-et-yes     : added by Elementor when "Enable Animation" is on.
+ * - .gsap-et-done    : added by the engine once the start state is applied.
+ * - .gsap-et-timeout : safety net; reveals everything after 3s if GSAP failed.
+ * Never hidden inside the Elementor editor.
+ */
+html.gsap-et-js:not(.gsap-et-timeout) body:not(.elementor-editor-active) .gsap-et-yes:not(.gsap-et-done) {
+	visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html.gsap-et-js body .gsap-et-yes {
+		visibility: visible;
+	}
+}

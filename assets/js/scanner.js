@@ -1,17 +1,18 @@
+/**
+ * Stand-alone mode (no Elementor): animates any element with a data-gsap attribute.
+ *   <div data-gsap="fade-up" data-duration="1.2" data-trigger="scroll"></div>
+ * Loaded only when the `gsap_elementor_toolkit/load_everywhere` filter is true.
+ */
 (function () {
 	'use strict';
 
-	var globalScope = window;
-
 	function scan() {
-		var elements = document.querySelectorAll('[data-gsap]');
-		var engine = globalScope.GSAPToolkit && globalScope.GSAPToolkit.Engine;
-
-		if (!engine || typeof engine.run !== 'function') {
+		var engine = window.GSAPToolkit && window.GSAPToolkit.Engine;
+		if (!engine) {
 			return;
 		}
 
-		Array.prototype.forEach.call(elements, function (element) {
+		Array.prototype.forEach.call(document.querySelectorAll('[data-gsap]'), function (element) {
 			engine.run(element);
 		});
 	}

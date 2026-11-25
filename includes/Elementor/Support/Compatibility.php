@@ -14,8 +14,10 @@ class Compatibility {
 
 	/**
 	 * Minimum supported Elementor version.
+	 * 3.20 keeps the large base of sites still on Elementor 3.x
+	 * (4.1 would lock them out). Classic V3 widgets still exist in Elementor 4.
 	 */
-	private const MINIMUM_ELEMENTOR_VERSION = '4.1.0';
+	public const MINIMUM_ELEMENTOR_VERSION = '3.20.0';
 
 	/**
 	 * Check whether Elementor is loaded.
@@ -23,7 +25,7 @@ class Compatibility {
 	 * @return bool
 	 */
 	public function is_elementor_loaded(): bool {
-		return did_action( 'elementor/loaded' );
+		return did_action( 'elementor/loaded' ) > 0;
 	}
 
 	/**
@@ -53,5 +55,28 @@ class Compatibility {
 
 		return $this->is_elementor_loaded()
 			&& $this->is_supported_version();
+	}
+
+	/**
+	 * Show an admin notice explaining why the integration is inactive.
+	 */
+	public function register_notice(): void {
+		add_action( 'admin_notices', array( $this, 'render_notice' ) );
+	}
+
+	/**
+	 * Render the notice.
+	 */
+	public function render_notice(): void {
+		if ( ! current_user_can( 'activate_plugins' ) ) {
+			return;
+		}
+
+		$message = $this->is_elementor_loaded()
+			/* translators: %s: minimum Elementor version. */
+			? sprintf( esc_html__( 'GSAP Elementor Toolkit needs Elementor %s or newer.', 'gsap-elementor-toolkit' ), esc_html( self::MINIMUM_ELEMENTOR_VERSION ) )
+			: esc_html__( 'GSAP Elementor Toolkit needs Elementor to be installed and active.', 'gsap-elementor-toolkit' );
+
+		printf( '<div class="notice notice-warning"><p>%s</p></div>', $message ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 }

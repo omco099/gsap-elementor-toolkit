@@ -10,6 +10,7 @@ namespace GSAP_Elementor_Toolkit\GSAP\Providers;
 use GSAP_Elementor_Toolkit\Core\Asset;
 use GSAP_Elementor_Toolkit\Core\Assets;
 use GSAP_Elementor_Toolkit\GSAP\Contracts\ProviderInterface;
+use GSAP_Elementor_Toolkit\GSAP\Library;
 
 /**
  * Registers the ScrollTrigger plugin asset.
@@ -24,12 +25,12 @@ class ScrollTriggerProvider implements ProviderInterface {
 		$assets->add(
 			new Asset(
 				'scroll-trigger',
-				'https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js',
+				Library::url( 'ScrollTrigger.min.js' ),
 				Asset::TYPE_SCRIPT,
 				Asset::AREA_FRONTEND,
 				array( 'gsap' ),
-				GSAP_ELEMENTOR_TOOLKIT_VERSION,
-				false,
+				Library::VERSION,
+				true,
 				'default'
 			)
 		);
