@@ -66,15 +66,23 @@ class Widget_Hooks {
 	 * Elementor versions), so the controls never appeared on widgets.
 	 * Checking the tab instead works for widgets, containers, sections and columns.
 	 *
-	 * @param Element_Base         $element Element.
-	 * @param string               $section_id Section that just closed.
-	 * @param array<string, mixed> $args Section args.
+	 * The hook also fires for documents (Kit / Site Settings, Page Settings),
+	 * which are NOT Element_Base, so the arguments must stay untyped and
+	 * every non-element is ignored before anything else runs.
+	 *
+	 * @param mixed $element Controls stack that owns the section (element or document).
+	 * @param mixed $section_id Section that just closed.
+	 * @param mixed $args Section args.
 	 */
-	public function register_controls(
-		Element_Base $element,
-		string $section_id,
-		array $args
-	): void {
+	public function register_controls( $element, $section_id = '', $args = array() ): void {
+
+		if ( ! $element instanceof Element_Base ) {
+			return;
+		}
+
+		if ( ! is_array( $args ) ) {
+			return;
+		}
 
 		if ( Animation_Controls::SECTION_ID === $section_id ) {
 			return;
